@@ -1,0 +1,5 @@
+{
+	"name": "@mastermakrela/elysia-supabase",
+	"version": "0.1.0",
+	"exports": "./supabase.ts"
+}
