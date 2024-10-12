@@ -1,22 +1,38 @@
-// to make this package work with other bundlers, we use Nodes process.env, instead of Deno's env
-// deno-lint-ignore-file no-process-globals
+// we also need to redefine some types from @supabase/supabase-js/2.45.4/src/lib/types.ts
+// because we cannot import it from the npm package
+export type GenericTable = {
+	Row: Record<string, unknown>;
+	Insert: Record<string, unknown>;
+	Update: Record<string, unknown>;
+};
 
-// we declare the global process.env here, to get rid of the typescript errors
-declare global {
-	const process: {
-		env: {
-			SUPABASE_URL: string | undefined;
-			SUPABASE_ANON_KEY: string | undefined;
-		};
-	};
-}
+export type GenericUpdatableView = GenericTable;
 
-import type { GenericSchema } from "https://jsr.io/@supabase/supabase-js/2.45.4/src/lib/types.ts";
+export type GenericNonUpdatableView = {
+	Row: Record<string, unknown>;
+};
+
+export type GenericView = GenericUpdatableView | GenericNonUpdatableView;
+
+export type GenericFunction = {
+	Args: Record<string, unknown>;
+	Returns: unknown;
+};
+
+export type GenericSchema = {
+	Tables: Record<string, GenericTable>;
+	Views: Record<string, GenericView>;
+	Functions: Record<string, GenericFunction>;
+};
+
 import {
 	createClient,
+	SupabaseClient,
 	type SupabaseClientOptions,
+	type User,
 } from "jsr:@supabase/supabase-js@2";
-import { Elysia } from "npm:elysia";
+import process from "node:process";
+import { Elysia } from "npm:elysia@^1.1.20";
 
 /**
  * Creates a Supabase client instance with authentication guard and injects it into the request context.
@@ -25,10 +41,6 @@ import { Elysia } from "npm:elysia";
  * but replaces teh auth header with the one from the request.
  *
  * If the request does not have an Authorization header or the token is invalid, the request will be rejected as unauthorized.
- *
- * @param {string} [supabase_url=process.env.SUPABASE_URL] - The URL of the Supabase instance.
- * @param {string} [supabase_anon_key=process.env.SUPABASE_ANON_KEY] - The anonymous key for the Supabase instance.
- * @param {SupabaseClientOptions<SchemaName>} [options] - Optional configuration for the Supabase client.
  */
 export const supabase = <
 	Database = any,
@@ -42,7 +54,39 @@ export const supabase = <
 	supabase_url = process.env.SUPABASE_URL,
 	supabase_anon_key = process.env.SUPABASE_ANON_KEY,
 	options?: SupabaseClientOptions<SchemaName>,
-) => new Elysia({ name: "supabase_auth_guard" }).resolve(
+): Elysia<
+	"",
+	false,
+	{
+		decorator: {};
+		store: {};
+		derive: {};
+		resolve: {};
+	},
+	{
+		type: {};
+		error: {};
+	},
+	{
+		schema: {};
+		macro: {};
+		macroFn: {};
+	},
+	{},
+	{
+		derive: {};
+		resolve: {
+			supabase: SupabaseClient<Database, SchemaName, Schema>;
+			user: User;
+		};
+		schema: {};
+	},
+	{
+		derive: {};
+		resolve: {};
+		schema: {};
+	}
+> => new Elysia({ name: "supabase_auth_guard" }).resolve(
 	{
 		as: "scoped",
 	},
