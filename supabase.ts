@@ -1,25 +1,25 @@
 // we also need to redefine some types from @supabase/supabase-js/2.45.4/src/lib/types.ts
 // because we cannot import it from the npm package
-export type GenericTable = {
+type GenericTable = {
 	Row: Record<string, unknown>;
 	Insert: Record<string, unknown>;
 	Update: Record<string, unknown>;
 };
 
-export type GenericUpdatableView = GenericTable;
+type GenericUpdatableView = GenericTable;
 
-export type GenericNonUpdatableView = {
+type GenericNonUpdatableView = {
 	Row: Record<string, unknown>;
 };
 
-export type GenericView = GenericUpdatableView | GenericNonUpdatableView;
+type GenericView = GenericUpdatableView | GenericNonUpdatableView;
 
-export type GenericFunction = {
+type GenericFunction = {
 	Args: Record<string, unknown>;
 	Returns: unknown;
 };
 
-export type GenericSchema = {
+type GenericSchema = {
 	Tables: Record<string, GenericTable>;
 	Views: Record<string, GenericView>;
 	Functions: Record<string, GenericFunction>;
@@ -35,7 +35,7 @@ import process from "node:process";
 import { Elysia } from "npm:elysia@^1.1.20";
 
 /**
- * Creates a Supabase client instance with authentication guard and injects it into the request context.
+ * Supabase authentication guard, which injects the Supabase client for the authenticated user.
  *
  * Takes the same arguments as createClient from the supabase-js package,
  * but replaces teh auth header with the one from the request.
