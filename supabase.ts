@@ -12,6 +12,27 @@
  * 	.get('/', ({ supabase, user }) => `Hi ${user.email}`)
  * 	.listen(3000)
  * ```
+ *
+ * @example
+ * ```ts
+ * import { Elysia } from "npm:elysia";
+ * import { supabase } from "jsr:@mastermakrela/elysia-supabase";
+ *
+ * const app = new Elysia()
+ * 	.use(supabase())
+ * 	.get("/", ({ supabase, user }) => `Hi ${user.email}`)
+ * 	.get("/data", async ({ supabase, error }) => {
+ * 		const resp = await supabase.from("table").select("*");
+ *
+ * 		if (resp.error) {
+ * 			return error(500, resp.error.message);
+ * 		}
+ *
+ * 		return resp.data;
+ * 	})
+ *
+ * Deno.serve(app.fetch);
+ * ```
  */
 
 // we also need to redefine some types from @supabase/supabase-js/2.45.4/src/lib/types.ts

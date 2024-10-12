@@ -86,12 +86,18 @@ import { supabase } from "jsr:@mastermakrela/elysia-supabase";
 const app = new Elysia()
 	.use(cors())
 	.use(supabase())
-	.get("/", ({ supabase, user }) => `Hi ${user.email}`);
+	.get("/hello", ({ supabase, user }) => `Hi ${user.email}`);
 
 Deno.serve(app.fetch);
 ```
 
 Note: The `cors` plugin is added to allow browser invocation of the Edge Function.
+
+Then in the client we can call it using:
+
+```ts
+const { data, error } = await supabase.functions.invoke("hello");
+```
 
 ## API Reference
 
