@@ -1,3 +1,19 @@
+/**
+ * This module contains functions to add supabase authentication to Elysia.
+ * @module
+ *
+ * @example
+ * ```ts
+ * import { Elysia } from 'elysia'
+ * import { supabase } from "@mastermakrela/elysia-supabase";
+ *
+ * const app = new Elysia()
+ * 	.use(supabase())
+ * 	.get('/', ({ supabase, user }) => `Hi ${user.email}`)
+ * 	.listen(3000)
+ * ```
+ */
+
 // we also need to redefine some types from @supabase/supabase-js/2.45.4/src/lib/types.ts
 // because we cannot import it from the npm package
 type GenericTable = {
