@@ -75,7 +75,7 @@ import { Elysia } from "npm:elysia@^1.1.20";
  * Supabase authentication guard, which injects the Supabase client for the authenticated user.
  *
  * Takes the same arguments as createClient from the supabase-js package,
- * but replaces teh auth header with the one from the request.
+ * but replaces the auth header with the one from the request.
  *
  * If the request does not have an Authorization header or the token is invalid, the request will be rejected as unauthorized.
  */
@@ -159,6 +159,96 @@ export const supabase = <
 		if (resp.error) {
 			return error(401);
 		}
+
+		return { supabase, user: resp.data.user };
+	},
+);
+
+/**
+ * Supabase authentication guard, which injects the Supabase client for the authenticated user.
+ *
+ * Takes the same arguments as createClient from the supabase-js package,
+ * but replaces the auth header with the one from the request.
+ *
+ * Returns user only if the token has one - so it should work with the anon key.
+ * If the request does not have an Authorization header or the token is invalid, the request will be rejected as unauthorized.
+ */
+export const anon_supabase = <
+	Database = any,
+	SchemaName extends string & keyof Database = "public" extends keyof Database
+		? "public"
+		: string & keyof Database,
+	Schema extends GenericSchema = Database[SchemaName] extends GenericSchema
+		? Database[SchemaName]
+		: any,
+>(
+	supabase_url = process.env.SUPABASE_URL,
+	supabase_anon_key = process.env.SUPABASE_ANON_KEY,
+	options?: SupabaseClientOptions<SchemaName>,
+): Elysia<
+	"",
+	false,
+	{
+		decorator: {};
+		store: {};
+		derive: {};
+		resolve: {};
+	},
+	{
+		type: {};
+		error: {};
+	},
+	{
+		schema: {};
+		macro: {};
+		macroFn: {};
+	},
+	{},
+	{
+		derive: {};
+		resolve: {
+			supabase: SupabaseClient<Database, SchemaName, Schema>;
+			user: User | null;
+		};
+		schema: {};
+	},
+	{
+		derive: {};
+		resolve: {};
+		schema: {};
+	}
+> => new Elysia({ name: "supabase_auth_guard" }).resolve(
+	{
+		as: "scoped",
+	},
+	async ({ request, error }) => {
+		if (!supabase_url) {
+			return error(500, "SUPABASE_URL is not set");
+		}
+
+		if (!supabase_anon_key) {
+			return error(500, "SUPABASE_ANON_KEY is not set");
+		}
+
+		const Authorization = request.headers.get("Authorization");
+
+		if (!Authorization) {
+			return error(401, "Authorization header is missing");
+		}
+
+		const supabase = createClient<Database, SchemaName, Schema>(
+			supabase_url,
+			supabase_anon_key,
+			{
+				...options,
+				global: {
+					...options?.global,
+					headers: { Authorization },
+				},
+			},
+		);
+
+		const resp = await supabase.auth.getUser();
 
 		return { supabase, user: resp.data.user };
 	},
