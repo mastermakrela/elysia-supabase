@@ -35,41 +35,13 @@
  * ```
  */
 
-// we also need to redefine some types from @supabase/supabase-js/2.45.4/src/lib/types.ts
-// because we cannot import it from the npm package
-type GenericTable = {
-	Row: Record<string, unknown>;
-	Insert: Record<string, unknown>;
-	Update: Record<string, unknown>;
-};
-
-type GenericUpdatableView = GenericTable;
-
-type GenericNonUpdatableView = {
-	Row: Record<string, unknown>;
-};
-
-type GenericView = GenericUpdatableView | GenericNonUpdatableView;
-
-type GenericFunction = {
-	Args: Record<string, unknown>;
-	Returns: unknown;
-};
-
-type GenericSchema = {
-	Tables: Record<string, GenericTable>;
-	Views: Record<string, GenericView>;
-	Functions: Record<string, GenericFunction>;
-};
-
 import {
 	createClient,
-	SupabaseClient,
 	type SupabaseClientOptions,
-	type User,
-} from "jsr:@supabase/supabase-js@2";
+} from "jsr:@supabase/supabase-js@2.48.1";
 import process from "node:process";
-import { Elysia } from "npm:elysia@^1.1.20";
+import { Elysia } from "npm:elysia@1.2.10";
+import { GenericSchema } from "./types.ts";
 
 /**
  * Supabase authentication guard, which injects the Supabase client for the authenticated user.
@@ -87,82 +59,55 @@ export const supabase = <
 	Schema extends GenericSchema = Database[SchemaName] extends GenericSchema
 		? Database[SchemaName]
 		: any,
->(
+>({
 	supabase_url = process.env.SUPABASE_URL,
 	supabase_anon_key = process.env.SUPABASE_ANON_KEY,
-	options?: SupabaseClientOptions<SchemaName>,
-): Elysia<
-	"",
-	false,
-	{
-		decorator: {};
-		store: {};
-		derive: {};
-		resolve: {};
-	},
-	{
-		type: {};
-		error: {};
-	},
-	{
-		schema: {};
-		macro: {};
-		macroFn: {};
-	},
-	{},
-	{
-		derive: {};
-		resolve: {
-			supabase: SupabaseClient<Database, SchemaName, Schema>;
-			user: User;
-		};
-		schema: {};
-	},
-	{
-		derive: {};
-		resolve: {};
-		schema: {};
-	}
-> => new Elysia({ name: "supabase_auth_guard" }).resolve(
-	{
-		as: "scoped",
-	},
-	async ({ request, error }) => {
-		if (!supabase_url) {
-			return error(500, "SUPABASE_URL is not set");
-		}
+	options,
+}: {
+	supabase_url?: string;
+	supabase_anon_key?: string;
+	options?: SupabaseClientOptions<SchemaName>;
+} = {}) =>
+	new Elysia({ name: "supabase_auth_guard" }).resolve(
+		{
+			as: "scoped",
+		},
+		async ({ request, error }) => {
+			if (!supabase_url) {
+				return error(500, "SUPABASE_URL is not set");
+			}
 
-		if (!supabase_anon_key) {
-			return error(500, "SUPABASE_ANON_KEY is not set");
-		}
+			if (!supabase_anon_key) {
+				return error(500, "SUPABASE_ANON_KEY is not set");
+			}
 
-		const Authorization = request.headers.get("Authorization");
+			const Authorization = request.headers.get("Authorization");
 
-		if (!Authorization) {
-			return error(401, "Authorization header is missing");
-		}
+			if (!Authorization) {
+				return error(401, "Authorization header is missing");
+			}
 
-		const supabase = createClient<Database, SchemaName, Schema>(
-			supabase_url,
-			supabase_anon_key,
-			{
-				...options,
-				global: {
-					...options?.global,
-					headers: { Authorization },
+			const supabase = createClient<Database, SchemaName, Schema>(
+				supabase_url,
+				supabase_anon_key,
+				{
+					...options,
+					global: {
+						...options?.global,
+						headers: { Authorization },
+					},
 				},
-			},
-		);
+			);
 
-		const resp = await supabase.auth.getUser();
+			const resp = await supabase.auth.getUser();
 
-		if (resp.error) {
-			return error(401);
-		}
+			if (resp.error) {
+				return error(401);
+			}
 
-		return { supabase, user: resp.data.user };
-	},
-);
+			return { supabase, user: resp.data.user };
+		},
+	);
 
 /**
  * Supabase authentication guard, which injects the Supabase client for the authenticated user.
@@ -181,75 +126,48 @@ export const anon_supabase = <
 	Schema extends GenericSchema = Database[SchemaName] extends GenericSchema
 		? Database[SchemaName]
 		: any,
->(
+>({
 	supabase_url = process.env.SUPABASE_URL,
 	supabase_anon_key = process.env.SUPABASE_ANON_KEY,
-	options?: SupabaseClientOptions<SchemaName>,
-): Elysia<
-	"",
-	false,
-	{
-		decorator: {};
-		store: {};
-		derive: {};
-		resolve: {};
-	},
-	{
-		type: {};
-		error: {};
-	},
-	{
-		schema: {};
-		macro: {};
-		macroFn: {};
-	},
-	{},
-	{
-		derive: {};
-		resolve: {
-			supabase: SupabaseClient<Database, SchemaName, Schema>;
-			user: User | null;
-		};
-		schema: {};
-	},
-	{
-		derive: {};
-		resolve: {};
-		schema: {};
-	}
-> => new Elysia({ name: "supabase_auth_guard" }).resolve(
-	{
-		as: "scoped",
-	},
-	async ({ request, error }) => {
-		if (!supabase_url) {
-			return error(500, "SUPABASE_URL is not set");
-		}
+	options,
+}: {
+	supabase_url?: string;
+	supabase_anon_key?: string;
+	options?: SupabaseClientOptions<SchemaName>;
+} = {}) =>
+	new Elysia({ name: "supabase_auth_guard" }).resolve(
+		{
+			as: "scoped",
+		},
+		async ({ request, error }) => {
+			if (!supabase_url) {
+				return error(500, "SUPABASE_URL is not set");
+			}
 
-		if (!supabase_anon_key) {
-			return error(500, "SUPABASE_ANON_KEY is not set");
-		}
+			if (!supabase_anon_key) {
+				return error(500, "SUPABASE_ANON_KEY is not set");
+			}
 
-		const Authorization = request.headers.get("Authorization");
+			const Authorization = request.headers.get("Authorization");
 
-		if (!Authorization) {
-			return error(401, "Authorization header is missing");
-		}
+			if (!Authorization) {
+				return error(401, "Authorization header is missing");
+			}
 
-		const supabase = createClient<Database, SchemaName, Schema>(
-			supabase_url,
-			supabase_anon_key,
-			{
-				...options,
-				global: {
-					...options?.global,
-					headers: { Authorization },
+			const supabase = createClient<Database, SchemaName, Schema>(
+				supabase_url,
+				supabase_anon_key,
+				{
+					...options,
+					global: {
+						...options?.global,
+						headers: { Authorization },
+					},
 				},
-			},
-		);
+			);
 
-		const resp = await supabase.auth.getUser();
+			const resp = await supabase.auth.getUser();
 
-		return { supabase, user: resp.data.user };
-	},
-);
+			return { supabase, user: resp.data.user };
+		},
+	);
