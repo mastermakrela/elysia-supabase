@@ -41,7 +41,7 @@ import {
 } from "jsr:@supabase/supabase-js@2.48.1";
 import process from "node:process";
 import { Elysia } from "npm:elysia@1.2.10";
-import { GenericSchema } from "./types.ts";
+import type { GenericSchema } from "./types.ts";
 
 /**
  * Supabase authentication guard, which injects the Supabase client for the authenticated user.
